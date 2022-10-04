@@ -87,6 +87,7 @@ class OccupancyField(object):
         """ Compute the closest obstacle to the specified (x,y) coordinate in
             the map.  If the (x,y) coordinate is out of the map boundaries, nan
             will be returned. """
+        # this isnt super accurate as it doesnt take into account the orientation of the robot
         x_coord = (x - self.map.info.origin.position.x)/self.map.info.resolution
         y_coord = (y - self.map.info.origin.position.y)/self.map.info.resolution
         if type(x) is np.ndarray:

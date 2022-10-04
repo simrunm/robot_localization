@@ -17,6 +17,7 @@ from occupancy_field import OccupancyField
 from helper_functions import TFHelper
 from rclpy.qos import qos_profile_sensor_data
 from angle_helpers import quaternion_from_euler
+import scipy.stats
 
 class Particle(object):
     """ Represents a hypothesis (particle) of the robot's pose consisting of x,y and theta (yaw)
@@ -244,8 +245,22 @@ class ParticleFilter(Node):
         if xy_theta is None:
             xy_theta = self.transform_helper.convert_pose_to_xy_and_theta(self.odom_pose)
         self.particle_cloud = []
-        # TODO create particles
+        # assigning thetas
+        lower = 0
+        upper = 360
+        mu = xy_theta[2]
+        sigma = 10
+        N = 10
+        theta = scipy.stats.truncnorm.rvs(
+          (lower-mu)/sigma,(upper-mu)/sigma,loc=mu,scale=sigma,size=N)
+        
+        # random distribution for x and y
+        x = np.random.normal(xy_theta[0],1,N)
+        y = np.random.normal(xy_theta[1],1,N) 
 
+        # putting all the particles in the list
+        for i in range(len(x)):
+            self.particle_cloud.append(Particle(x=x[i], y=y[i],theta=theta[i], w=0.1))
         self.normalize_particles()
         self.update_robot_pose()
 
