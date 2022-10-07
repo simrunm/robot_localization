@@ -17,6 +17,7 @@ from occupancy_field import OccupancyField
 from helper_functions import TFHelper
 from rclpy.qos import qos_profile_sensor_data
 from angle_helpers import quaternion_from_euler
+from helper_functions import draw_random_sample
 import scipy.stats
 
 class Particle(object):
@@ -99,6 +100,7 @@ class ParticleFilter(Node):
         self.scan_to_process = None
         # your particle cloud will go here
         self.particle_cloud = []
+
 
         self.current_odom_xy_theta = []
         self.occupancy_field = OccupancyField(self)
@@ -219,7 +221,10 @@ class ParticleFilter(Node):
         """
         # make sure the distribution is normalized
         self.normalize_particles()
-        # TODO: fill out the rest of the implementation
+        weights = []
+        for particle in self.particle_cloud:
+            weights.append(particle.w)
+        self.particle_cloud = draw_random_sample(self.particle_cloud, weights,self.n_particles)
 
     def update_particles_with_laser(self, r, theta):
         """ Updates the particle weights in response to the scan data
