@@ -226,8 +226,21 @@ class ParticleFilter(Node):
             r: the distance readings to obstacles
             theta: the angle relative to the robot frame for each corresponding reading 
         """
-        # TODO: implement this
-        pass
+        new_weights = []
+        mean_distances = []
+        for particle in self.particle_cloud:
+            distance_difference = []
+            for j in range(len(theta)):
+                new_x = particle.x - r[j] * math.sin(particle.theta + theta[j])
+                new_y = particle.y - r[j] * math.cos(particle.theta + theta[j])
+                distance_difference.append(r[j] - self.occupancy_field.get_closest_obstacle_distance(new_x, new_y))
+            mean_distance = sum(distance_difference)/len(distance_difference)
+            weight = 1/mean_distance
+
+
+        
+
+
 
     @staticmethod
 
@@ -250,7 +263,7 @@ class ParticleFilter(Node):
         upper = 360
         mu = xy_theta[2]
         sigma = 10
-        N = 10
+        N = 5
         theta = scipy.stats.truncnorm.rvs(
           (lower-mu)/sigma,(upper-mu)/sigma,loc=mu,scale=sigma,size=N)
         
@@ -260,14 +273,22 @@ class ParticleFilter(Node):
 
         # putting all the particles in the list
         for i in range(len(x)):
-            self.particle_cloud.append(Particle(x=x[i], y=y[i],theta=theta[i], w=0.1))
+            self.particle_cloud.append(Particle(x=x[i], y=y[i],theta=theta[i], w=1/N))
         self.normalize_particles()
         self.update_robot_pose()
 
     def normalize_particles(self):
         """ Make sure the particle weights define a valid distribution (i.e. sum to 1.0) """
-        # TODO: implement this
-        pass
+        weights = []
+        for particle in self.particle_cloud:
+            weights.append(particle.w)
+        normalizer = 1 / sum(weights)
+        weights_normalized = [weight * normalizer for weight in weights]
+        for idx,particle in enumerate(self.particle_cloud):
+            particle.w = weights_normalized[idx]
+
+
+            
 
     def publish_particles(self, timestamp):
         particles_conv = []
