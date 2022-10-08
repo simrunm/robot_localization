@@ -2,6 +2,7 @@
 
 """ This is the starter code for the robot localization project """
 
+from cmath import cos
 import rclpy
 from threading import Thread
 from rclpy.time import Time
@@ -16,6 +17,7 @@ import numpy as np
 from occupancy_field import OccupancyField
 from helper_functions import TFHelper
 from rclpy.qos import qos_profile_sensor_data
+from numpy.linalg import inv
 from angle_helpers import quaternion_from_euler
 
 class Particle(object):
@@ -37,6 +39,11 @@ class Particle(object):
         self.theta = theta
         self.x = x
         self.y = y
+    
+    def update_pose(self, delta_x, delta_y, delta_theta):
+        self.x += delta_x
+        self.y += delta_y
+        self.theta += delta_theta
 
     def as_pose(self):
         """ A helper function to convert a particle to a geometry_msgs/Pose message """
@@ -199,16 +206,26 @@ class ParticleFilter(Node):
         # compute the change in x,y,theta since our last update
         if self.current_odom_xy_theta:
             old_odom_xy_theta = self.current_odom_xy_theta
-            delta = (new_odom_xy_theta[0] - self.current_odom_xy_theta[0],
-                     new_odom_xy_theta[1] - self.current_odom_xy_theta[1],
-                     new_odom_xy_theta[2] - self.current_odom_xy_theta[2])
+            delta = (new_odom_xy_theta[0] - old_odom_xy_theta[0],
+                     new_odom_xy_theta[1] - old_odom_xy_theta[1],
+                     new_odom_xy_theta[2] - old_odom_xy_theta[2])
 
             self.current_odom_xy_theta = new_odom_xy_theta
         else:
             self.current_odom_xy_theta = new_odom_xy_theta
             return
 
-        # TODO: modify particles using delta
+        # modify particles using delta
+        a = np.array([[np.cos(old_odom_xy_theta[2]), np.sin(old_odom_xy_theta[2]), old_odom_xy_theta[0]],
+                      [np.sin(old_odom_xy_theta[2]), np.cos(old_odom_xy_theta[2]), old_odom_xy_theta[0]],
+                      [0, 0, 1]])
+        b = np.array([[np.cos(new_odom_xy_theta[2]), np.sin(new_odom_xy_theta[2]), new_odom_xy_theta[0]],
+                      [np.sin(new_odom_xy_theta[2]), np.cos(new_odom_xy_theta[2]), new_odom_xy_theta[0]],
+                      [0, 0, 1]])
+        t = np.matmul(inv(a), b)
+        for particle in self.particle_cloud:
+            particle.update_pose(t[0], t[1], t[2])
+
 
     def resample_particles(self):
         """ Resample the particles according to the new particle weights.
