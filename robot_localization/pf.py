@@ -192,9 +192,17 @@ class ParticleFilter(Node):
         # first make sure that the particle weights are normalized
         self.normalize_particles()
 
-        # TODO: assign the latest pose into self.robot_pose as a geometry_msgs.Pose object
-        # just to get started we will fix the robot's pose to always be at the origin
-        self.robot_pose = Pose()
+        # compute mean pose
+        mean_x = 0
+        mean_y = 0
+        mean_theta = 0
+        for particle in self.particle_cloud:
+            mean_x += particle.x * particle.w
+            mean_y += particle.y * particle.w
+            mean_theta += particle.theta * particle.w
+
+        # assign the latest pose into self.robot_pose as a geometry_msgs.Pose object
+        self.robot_pose = Pose(mean_x, mean_y, mean_theta)
 
         self.transform_helper.fix_map_to_odom_transform(self.robot_pose,
                                                         self.odom_pose)
