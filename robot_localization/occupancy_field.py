@@ -1,10 +1,12 @@
 """ An implementation of an occupancy field that you can use to implement
     your particle filter """
 
+from math import inf
 import rclpy
 from nav_msgs.srv import GetMap
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
+import math
 
 class OccupancyField(object):
     """ Stores an occupancy field for an input map.  An occupancy field returns
@@ -93,6 +95,8 @@ class OccupancyField(object):
         if type(x) is np.ndarray:
             x_coord = x_coord.astype(np.int)
             y_coord = y_coord.astype(np.int)
+        elif x_coord == float('inf') or y_coord == float('inf'):
+            return float('nan')
         else:
             x_coord = int(x_coord)
             y_coord = int(y_coord)

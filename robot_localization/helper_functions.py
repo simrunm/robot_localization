@@ -33,7 +33,7 @@ def draw_random_sample(choices, probabilities, n):
     print(f'Probabilities {probs}')
     print(f'n{n}')
     bins = np.add.accumulate(probs)
-    print('bins', bins)
+    print('bins shape', bins.ndim)
     inds = values[np.digitize(random_sample(n), bins)]
     samples = []
     for i in inds:
