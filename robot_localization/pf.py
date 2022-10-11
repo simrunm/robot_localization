@@ -3,6 +3,7 @@
 """ This is the starter code for the robot localization project """
 
 from cmath import cos
+from hashlib import new
 import rclpy
 from threading import Thread
 from rclpy.time import Time
@@ -42,10 +43,14 @@ class Particle(object):
         self.x = x
         self.y = y
     
-    def update_pose(self, delta_x, delta_y, delta_theta):
-        self.x += delta_x
-        self.y += delta_y
-        self.theta += delta_theta
+    def update_pose(self, t):
+        old_pose = np.array([[self.x],
+                      [self.y],
+                      [self.theta]])
+        new_pose = np.matmul(old_pose, t)
+        self.x = new_pose[0]
+        self.y = new_pose[1]
+        self.theta = new_pose[2]
 
     def as_pose(self):
         """ A helper function to convert a particle to a geometry_msgs/Pose message """
@@ -235,7 +240,7 @@ class ParticleFilter(Node):
                       [0, 0, 1]])
         t = np.matmul(inv(a), b)
         for particle in self.particle_cloud:
-            particle.update_pose(t[0], t[1], t[2])
+            particle.update_pose(t)
 
 
     def resample_particles(self):
