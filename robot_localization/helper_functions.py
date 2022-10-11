@@ -1,6 +1,6 @@
 """ Some convenience functions for translating between various representations
     of a robot pose. """
-
+from angle_helpers import quaternion_from_euler
 from urllib.robotparser import RobotFileParser
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion, TransformStamped
@@ -194,3 +194,10 @@ class TFHelper(object):
                                         w=laser_pose.orientation.w)
         laser_yaw = rot.GetRPY()[2]
         return (msg.ranges, np.linspace(msg.angle_min+laser_yaw, msg.angle_max+laser_yaw, len(msg.ranges)))
+
+
+def as_pose(x, y, theta):
+    """ A helper function to convert a particle to a geometry_msgs/Pose message """
+    q = quaternion_from_euler(0, 0, theta)
+    return Pose(position=Point(x=x, y=y, z=0.0),
+                orientation=Quaternion(x=q[0], y=q[1], z=q[2], w=q[3]))

@@ -16,11 +16,13 @@ import math
 import time
 import numpy as np
 from occupancy_field import OccupancyField
-from helper_functions import TFHelper
+from helper_functions import TFHelper, as_pose
 from rclpy.qos import qos_profile_sensor_data
 from numpy.linalg import inv
 from angle_helpers import quaternion_from_euler
+from helper_functions import as_pose
 from helper_functions import draw_random_sample
+import math
 import scipy.stats
 
 class Particle(object):
@@ -207,7 +209,7 @@ class ParticleFilter(Node):
             mean_theta += particle.theta * particle.w
 
         # assign the latest pose into self.robot_pose as a geometry_msgs.Pose object
-        self.robot_pose = Pose(mean_x, mean_y, mean_theta)
+        self.robot_pose = as_pose(mean_x, mean_y, mean_theta)
 
         self.transform_helper.fix_map_to_odom_transform(self.robot_pose,
                                                         self.odom_pose)
@@ -240,7 +242,11 @@ class ParticleFilter(Node):
                       [0, 0, 1]])
         t = np.matmul(inv(a), b)
         for particle in self.particle_cloud:
+<<<<<<< HEAD
             particle.update_pose(t)
+=======
+            particle.update_pose(t[0][0], t[0][1], t[0][2]) # this might be wrong, but just filler for now
+>>>>>>> 1188d79a93bf14506cc49fa933e36f0de64fdafc
 
 
     def resample_particles(self):
@@ -261,22 +267,23 @@ class ParticleFilter(Node):
             r: the distance readings to obstacles
             theta: the angle relative to the robot frame for each corresponding reading 
         """
-        new_weights = []
-        mean_distances = []
         for particle in self.particle_cloud:
             distance_difference = []
+            # getting the difference between the actual radius and the closest obstacle 
+            # from the particle at that point
             for j in range(len(theta)):
                 new_x = particle.x - r[j] * math.sin(particle.theta + theta[j])
                 new_y = particle.y - r[j] * math.cos(particle.theta + theta[j])
-                distance_difference.append(r[j] - self.occupancy_field.get_closest_obstacle_distance(new_x, new_y))
+                if math.isnan(self.occupancy_field.get_closest_obstacle_distance(new_x, new_y)):
+                    distance_difference.append(float(1000)) # some large value
+                else:
+                    distance_difference.append(r[j] - self.occupancy_field.get_closest_obstacle_distance(new_x, new_y))
             mean_distance = sum(distance_difference)/len(distance_difference)
             weight = 1/mean_distance
+            particle.w = weight
+            
 
-
-        
-
-
-
+     
     @staticmethod
 
     def update_initial_pose(self, msg):
@@ -341,6 +348,11 @@ class ParticleFilter(Node):
         # self.scan_to_process is set to None in the run_loop 
         if self.scan_to_process is None:
             self.scan_to_process = msg
+
+    def print_all_particles(self):
+        for idx,particle in enumerate(self.particle_cloud):
+            print(f'Particle {idx}')
+            print(f'x: {particle.x}, y: {particle.y}, theta: {particle.theta}, weight: {particle.w}')
 
 def main(args=None):
     rclpy.init()
