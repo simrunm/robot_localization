@@ -95,7 +95,7 @@ class OccupancyField(object):
         if type(x) is np.ndarray:
             x_coord = x_coord.astype(np.int)
             y_coord = y_coord.astype(np.int)
-        elif x_coord == float('inf') or y_coord == float('inf'):
+        elif math.isinf(x_coord) or math.isinf(y_coord):
             return float('nan')
         else:
             x_coord = int(x_coord)

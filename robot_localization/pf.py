@@ -24,6 +24,8 @@ from helper_functions import as_pose
 from helper_functions import draw_random_sample
 import math
 import scipy.stats
+import matplotlib.pyplot as plt
+from std_msgs.msg import Float32
 
 class Particle(object):
     """ Represents a hypothesis (particle) of the robot's pose consisting of x,y and theta (yaw)
@@ -103,6 +105,7 @@ class ParticleFilter(Node):
 
         # publish the current particle cloud.  This enables viewing particles in rviz.
         self.particle_pub = self.create_publisher(PoseArray, "particlecloud", qos_profile_sensor_data)
+        # self.weights_pub = self.create_publisher(Float32, "weights", 100)
 
         # laser_subscriber listens for data from the lidar
         self.create_subscription(LaserScan, self.scan_topic, self.scan_received, 10)
@@ -180,7 +183,7 @@ class ParticleFilter(Node):
         elif self.moved_far_enough_to_update(new_odom_xy_theta):
             # we have moved far enough to do an update!
             self.update_particles_with_odom()    # update based on odometry
-            self.add_noise()
+            # self.add_noise()
             # self.print_all_particles()
             self.update_particles_with_laser(r, theta)   # update based on laser scan
             self.update_robot_pose()                # update robot's pose based on particles
@@ -188,6 +191,8 @@ class ParticleFilter(Node):
             self.add_noise()
         # publish particles (so things like rviz can see them)
         self.publish_particles(msg.header.stamp)
+        self.plot_weights()
+        
 
     def moved_far_enough_to_update(self, new_odom_xy_theta):
         return math.fabs(new_odom_xy_theta[0] - self.current_odom_xy_theta[0]) > self.d_thresh or \
@@ -262,21 +267,22 @@ class ParticleFilter(Node):
         for particle in self.particle_cloud:
             weights.append(particle.w)
         self.particle_cloud = draw_random_sample(self.particle_cloud, weights,self.n_particles)
+        
 
     def add_noise(self):
-        threshold = 0.6
+        threshold = 0.2
         for particle in self.particle_cloud:
-            if particle.w > threshold:
+            if particle.w  > threshold:
                 randx = np.random.uniform(-0.3,0.3)
                 randy = np.random.uniform(-0.3,0.3)
-                rand_theta = np.random.uniform(-2 * math.pi/180,2 * math.pi/180)
+                rand_theta = np.random.uniform(-5 * math.pi/180, 5 * math.pi/180)
                 particle.x += randx
                 particle.y += randy
                 particle.theta += rand_theta
 
     def update_particles_with_laser(self, r, theta):
         """ Updates the particle weights in response to the scan data
-            r: the distance readings to obstacles
+            r: the distance readings to obstaclesR
             theta: the angle relative to the robot frame for each corresponding reading 
         """
         for particle in self.particle_cloud:
@@ -329,6 +335,7 @@ class ParticleFilter(Node):
         # putting all the particles in the list
         for i in range(len(x)):
             self.particle_cloud.append(Particle(x=x[i], y=y[i],theta=theta[i], w=1/N))
+    
         self.normalize_particles()
 
     def normalize_particles(self):
@@ -365,6 +372,24 @@ class ParticleFilter(Node):
         for idx,particle in enumerate(self.particle_cloud):
             print(f'Particle {idx}')
             print(f'x: {particle.x}, y: {particle.y}, theta: {particle.theta}, weight: {particle.w}')
+
+    def plot_weights(self):
+        # use the scatter function
+        # fig = plt.gcf()
+        # fig.show()
+        x = []
+        y = []
+        weight = []
+        # plt.clf()
+        for particle in self.particle_cloud:
+            x.append(particle.x)
+            y.append(particle.y)
+            weight.append(particle.w)
+        # plt.scatter(x, y, s=weight*10000, alpha=0.5)
+        # fig.canvas.draw()
+        print("Weights lists", weight)
+
+
 
 def main(args=None):
     rclpy.init()

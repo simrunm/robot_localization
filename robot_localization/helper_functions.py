@@ -28,12 +28,8 @@ def draw_random_sample(choices, probabilities, n):
             n: the number of samples
     """
     values = np.array(range(len(choices)))
-    print(f'Values {values}')
     probs = np.array(probabilities)
-    print(f'Probabilities {probs}')
-    print(f'n{n}')
     bins = np.add.accumulate(probs)
-    print('bins shape', bins.ndim)
     inds = values[np.digitize(random_sample(n), bins)]
     samples = []
     for i in inds:
