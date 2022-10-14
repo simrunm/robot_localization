@@ -31,6 +31,11 @@ The first step of the particle filter update loop is to reflect the Neato’s ch
 ## Updating particle weights
 Next, each particle's weight is updated based on how likely the Neato lidar readings are from its position and orientation. In other words, the likelihood that a particle is an accurate estimate can be determined by whether lidar scan data from the Neato matches the surroundings of the particle, represented as an occupancy grid. First, we convert r and theta values, which represent obstacles from the scan data, to the corresponding x and y coordinates where the obstacles would be located relative to the particle. Then we query the occupancy grid at those coordinates to see if there is an obstacle there. If there is, then it indicates that the particle is a likely estimate of the Neato position and should be weighted with a higher confidence. If querying the occupancy grid shows that the nearest obstacle is at some distance, then the particle weight is determined by how far off it is.
 
+<p align="center">
+<img src="graph.gif" width="400"/>
+</p>
+<center> Video of a visualization to show particle weights </center>
+
 ## Updating robot position estimate
 Next, we take the weighted average of all of the particle's poses to generate an estimated robot pose which is then used to update the odom to map transform. 
 
