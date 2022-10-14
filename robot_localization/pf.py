@@ -191,7 +191,7 @@ class ParticleFilter(Node):
             self.add_noise()
         # publish particles (so things like rviz can see them)
         self.publish_particles(msg.header.stamp)
-        self.plot_weights()
+        # self.plot_weights()
         
 
     def moved_far_enough_to_update(self, new_odom_xy_theta):
@@ -375,8 +375,8 @@ class ParticleFilter(Node):
 
     def plot_weights(self):
         # use the scatter function
-        # fig = plt.gcf()
-        # fig.show()
+        fig = plt.gcf()
+        fig.show()
         x = []
         y = []
         weight = []
@@ -385,8 +385,8 @@ class ParticleFilter(Node):
             x.append(particle.x)
             y.append(particle.y)
             weight.append(particle.w)
-        # plt.scatter(x, y, s=weight*10000, alpha=0.5)
-        # fig.canvas.draw()
+        plt.scatter(x, y, s=weight*100000, alpha=0.5)
+        fig.canvas.draw()
         print("Weights lists", weight)
 
 
